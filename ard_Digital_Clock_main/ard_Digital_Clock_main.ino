@@ -1,5 +1,9 @@
-#define COUNTDIGITS 4; //Count available digits
-#define COUNTSEGMENTLEDS 5; //Count LEDs building onto ONE segment
+#define DIGITS 4 //Count available digits
+#define SEGMENTS 7 //Count segments for ONE digit
+#define SEGMENTLEDS 6 //Count LEDs building onto ONE segment
+#define DIGITS 10 //Count available digits 0-9
+
+#define DIGITLEDS SEGMENTS*SEGMENTLEDS //Count LED's per Digit
 
 #include <Adafruit_NeoPixel.h>
 #include "functions_brightness.h"
@@ -9,7 +13,7 @@
 #define PIN        6 // On Trinket or Gemma, suggest changing this to 1
 
 // How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS 16 // Popular NeoPixel ring size
+#define NUMPIXELS DIGITS*DIGITLEDS-1 // Popular NeoPixel ring size
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
@@ -21,23 +25,45 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 
 //Constants
-const bool digits [10][7] = {{1,1,1,0,1,1,1}, //0
-                             {1,0,0,0,1,0,0}, //1
-                             {1,1,0,1,0,1,1}, //2
-                             {1,1,0,1,1,1,0}, //3
-                             {1,0,1,1,1,0,0}, //4
-                             {0,1,1,1,1,1,0}, //5
-                             {0,1,1,1,1,1,1}, //6
-                             {1,1,0,0,1,0,0}, //7
-                             {1,1,1,1,1,1,1}, //8
-                             {1,1,1,1,1,1,0}};//9
+//Contains state for segments to display digits [digits][segments]
+                     //SegmentNum: 0 1 2 3 4 5 6 
+bool digits [DIGITS][SEGMENTS] = {{1,1,1,0,1,1,1}, //0
+                                  {1,0,0,0,1,0,0}, //1
+                                  {1,1,0,1,0,1,1}, //2
+                                  {1,1,0,1,1,1,0}, //3
+                                  {1,0,1,1,1,0,0}, //4
+                                  {0,1,1,1,1,1,0}, //5
+                                  {0,1,1,1,1,1,1}, //6
+                                  {1,1,0,0,1,0,0}, //7
+                                  {1,1,1,1,1,1,1}, //8
+                                  {1,1,1,1,1,1,0}};//9
+
+
+//Variables
+//Contains variables
+int digit_show [DIGITS];
+bool pix_show[NUMPIXELS];
 
 void setup() {
 
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+
+  
+  digit_show[0] = 8;
+  digit_show[1] = 8;
+  digit_show[2] = 8;
+  digit_show[3] = 8;
+  
+  bool new_pix_show = calc_pixels(digits, digit_show, NUMPIXELS);
+  //pix_show = new_pix_show;
+  
 }
 
 void loop() {
+}
+
+
+/*
   // put your main code here, to run repeatedly:
 
   pixels.clear();  //Set  all pixel colors of 'off'
@@ -53,4 +79,6 @@ void loop() {
     pixels.show();   // Send the updated pixel colors to the hardware.
 
     delay(DELAYVAL); // Pause before next pass through loop
-}
+  }
+
+  */

@@ -1,27 +1,23 @@
-#define DIGITS 1 //Count available digits
+#define DIGITS 4 //Count available digits
 #define SEGMENTS 7 //Count segments for ONE digit
 #define SEGMENTLEDS 6 //Count LEDs building onto ONE segment
 #define NUMBERS 10 //Count available digits 0-9
-
 #define DIGITLEDS SEGMENTS*SEGMENTLEDS //Count LED's per Digit
 
 #include <Adafruit_NeoPixel.h>
+#include <RTClib.h>
 #include "functions_brightness.h"
 
 
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN        6 // On Trinket or Gemma, suggest changing this to 1
-
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS DIGITS*DIGITLEDS // Popular NeoPixel ring size
 
-#define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
-// When setting up the NeoPixel library, we tell it how many pixels,
-// and which pin to use to send signals. Note that for older NeoPixel
-// strips you might need to change the third parameter -- see the
-// strandtest example for more information on possible values.
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+
+
 
 
 //Constants
@@ -41,43 +37,79 @@ bool digits [NUMBERS][SEGMENTS] = {{1,1,1,0,1,1,1}, //0
 
 //Variables
 //Contains variables
-int digit_show [DIGITS];
+byte digit_show [DIGITS];
 bool pix_show[NUMPIXELS];
+unsigned long refreshtime;
+// When setting up the NeoPixel library, we tell it how many pixels,
+// and which pin to use to send signals. Note that for older NeoPixel
+// strips you might need to change the third parameter -- see the
+// strandtest example for more information on possible values.
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+//Setting up Real-Time-Clock to show the actual time
+RTC_DS3231 rtc;
 
 void setup() {
+  Serial.begin(4800); //Initialize Serial Monitor
+  pixels.begin(); // Initialize NeoPixel strip object (REQUIRED)
 
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  Serial.begin(4800);
+  if (! rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    Serial.flush();
+    abort();
+  }
+
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, let's set the time!");
+    // When time needs to be set on a new device, or after a power loss, the
+    // following line sets the RTC to the date & time this sketch was compiled
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // This line sets the RTC with an explicit date & time, for example to set
+    // January 21, 2014 at 3am you would call:
+    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+  }
+  
   delay(100);
-  Serial.println("Started");
   
-  digit_show[0] = 2;
+  digit_show[3] = 0;
+  digit_show[2] = 0;
+  digit_show[1] = 0;
+  digit_show[0] = 0;
   
-  calc_pixels(digits, digit_show, pix_show);
+  refreshtime = millis();
 
-  Serial.println("Ended");
 }
 
 void loop() {
-}
+  if(millis() - refreshtime > 1000){
+    DateTime  now = rtc.now();
 
+    byte h = now.hour();
+    byte m = now.minute();
+    digit_show[3] = h / 10;
+    digit_show[2] = h - digit_show[3] * 10;
+    digit_show[1] = m / 10;
+    digit_show[0] = m - digit_show[1] * 10;
 
-/*
-  // put your main code here, to run repeatedly:
+    /*
+    // DEBUG
+    Serial.print(digit_show[3]);
+    Serial.print(digit_show[2]);
+    Serial.print(":");
+    Serial.print(digit_show[1]);
+    Serial.println(digit_show[0]);
+    */
 
-  pixels.clear();  //Set  all pixel colors of 'off'
-  
-  // The first NeoPixel in a strand is #0, second is 1, all the way up
-  // to the count of pixels minus one.
-  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+    calc_pixels(digits, digit_show, pix_show);
 
-    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
-    // Here we're using a moderately bright green color:
-    pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+    pixels.clear();
+    
+    for(int i = 0; i < sizeof(pix_show); i++){
+      pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+    }
 
-    pixels.show();   // Send the updated pixel colors to the hardware.
-
-    delay(DELAYVAL); // Pause before next pass through loop
+    pixels.show();
+    
+    refreshtime = millis();
+    //Serial.println("Done");
   }
-
-  */
+}

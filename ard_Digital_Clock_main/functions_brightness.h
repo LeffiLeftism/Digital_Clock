@@ -1,7 +1,7 @@
 
-void calc_pixels(bool digits [][SEGMENTS], int digit_show[], bool *pix_show);
+void calc_pixels(bool digits [][SEGMENTS], byte digit_show[], bool *pix_show);
 
-void calc_pixels(bool digits [][SEGMENTS], int digit_show[], bool *pix_show){
+void calc_pixels(bool digits [][SEGMENTS], byte digit_show[], bool *pix_show){
   Serial.begin(4800);
   for(int d = 0; d < DIGITS; d++){
     for(int seg = 0; seg < SEGMENTS; seg++){

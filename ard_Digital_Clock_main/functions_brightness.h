@@ -1,14 +1,27 @@
 
-bool calc_pixels(bool digits [][SEGMENTS], int digit_show[], int countPixels);
+void calc_pixels(bool digits [][SEGMENTS], int digit_show[], bool *pix_show);
 
-bool calc_pixels(bool digits [][SEGMENTS], int digit_show[], int countPixels){
-  bool new_pix_show[countPixels];
+void calc_pixels(bool digits [][SEGMENTS], int digit_show[], bool *pix_show){
+  Serial.begin(4800);
   for(int d = 0; d < DIGITS; d++){
     for(int seg = 0; seg < SEGMENTS; seg++){
       for(int p = 0; p < SEGMENTLEDS; p++){
-        new_pix_show[SEGMENTLEDS*(d*SEGMENTS+seg)+p] = digits[digit_show[d]][seg];
+        pix_show[SEGMENTLEDS*(d*SEGMENTS+seg)+p] = digits[digit_show[d]][seg];
+        
+        
+        
+        /* **DEBUG**
+        //Printout entire pix_show Array with Comments
+        Serial.print("Digit: "); 
+        Serial.print(d); 
+        Serial.print(" | Seg: "); 
+        Serial.print(seg); 
+        Serial.print(" | Pixel: "); 
+        Serial.print(p);
+        Serial.print(" | Val: ");
+        Serial.println(digits[digit_show[d]][seg]);
+        */
       }
     }
   }
-  return new_pix_show;
 }

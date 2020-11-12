@@ -6,5 +6,5 @@ To-Do:
   + move "point" around active segments (time or temerature or so)
 + ADD startup-LED animation or something
 + ADD display temperature
-+ ADD switch between time and temperature
++ ADD switch between time and temperature and date
 + ADD function to show pixels with 2 arrays given (pix_show & color_show(or something))

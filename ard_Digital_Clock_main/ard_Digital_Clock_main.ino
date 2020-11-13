@@ -4,7 +4,7 @@
 // - NeoPixel strip's DATA-IN should pass through a 300-500 OHM RESISTOR.
 // - AVOID connecting NeoPixels on a LIVE CIRCUIT. If you must, ALWAYS
 //   connect GROUND (-) first, then +, then data.
-HIELAFASD
+
 #define DIGITS 4 //Count available digits on clock
 #define SEGMENTS 7 //Count segments for ONE digit
 #define LEDSPERSEGMENT 6 //Count LEDs building onto ONE segment

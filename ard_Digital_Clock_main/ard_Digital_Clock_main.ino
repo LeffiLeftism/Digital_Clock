@@ -7,7 +7,7 @@
 
 #define DIGITS 4 //Count available digits on clock
 #define SEGMENTS 7 //Count segments for ONE digit
-#define LEDSPERSEGMENT 6 //Count LEDs building onto ONE segment
+#define LEDSPERSEGMENT 4 //Count LEDs building onto ONE segment
 #define NUMBERS 10 //Count available digits 0-9
 #define DIGITLEDS SEGMENTS*LEDSPERSEGMENT //Count LED's per Digit
 
@@ -17,7 +17,7 @@
 
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define PIN        6 // On Trinket or Gemma, suggest changing this to 1
+#define PIN 6 // On Trinket or Gemma, suggest changing this to 1
 // How many NeoPixels are attached to the Arduino?
 #define NUMPIXELS DIGITS*DIGITLEDS // Popular NeoPixel ring size
 
@@ -37,10 +37,13 @@ bool symbols [][SEGMENTS] = {{1,1,1,0,1,1,1}, //0
                              {1,1,1,1,1,1,1}, //8
                              {1,1,1,1,1,1,0}, //9
                              {0,1,1,0,0,1,1}, // C
-                             {1,1,1,1,0,0,0}};// °
+                             {1,1,1,1,0,0,0}, // °
+                             {0,0,0,0,0,0,0}};//all off
 
 //Variables
-//Contains variables 
+byte modus = 0;
+byte h, m, d, mon, temp;
+byte brightness = 0;
 byte symbol_show [DIGITS];   //Contains numbers to show on clock
 bool pix_show[NUMPIXELS];   //Contains 0/1 (OFF/ON) for each LED/pixel on LED strip
 unsigned long refreshtime;  //Variable to track passed time, to refresh display
@@ -56,7 +59,6 @@ RTC_DS3231 rtc;
 void setup() {
   Serial.begin(4800); //Initialize Serial Monitor
   pixels.begin(); // Initialize NeoPixel strip object (REQUIRED)
-
   if (! rtc.begin()) { //Tests if RTC is connected
     Serial.println("Couldn't find RTC");
     Serial.flush();
@@ -76,10 +78,6 @@ void setup() {
   //Dev-place start
   delay(100);
   
-  symbol_show[3] = 2;
-  symbol_show[2] = 6;
-  symbol_show[1] = 10;
-  symbol_show[0] = 11;
 
   //Def-place end
 
@@ -87,76 +85,104 @@ void setup() {
   
   refreshtime = millis(); //Sets actual time to track passed time for refresh display
 
+  DateTime  now = rtc.now();     //Read actual Real Time
+  h = now.hour();
+  m = now.minute();
 }
 
 void loop() {
 
-  //Add change between time and temperature
+  if(h > 22 || h < 6){
+    for(int i = 0; i < NUMPIXELS; i++){
+      pixels.setPixelColor(i, pixels.Color(1,0,0));
+    }
+    cutColors();
+    pixels.show();
+  } else {  
+    //Serial.println("Rainbow");
+    rainbow(120);
+  }  
+  /*
+  Serial.println("theaterChase");
+  theaterChase(pixels.Color(  0,   0, 127), 49);
   
-  if(millis() - refreshtime > 1000){    //Check if refreshtime is over
-    DateTime  now = rtc.now();     //Read actual Real Time
-
-  //Set "symbol_show" to show actual Real Time
-    byte h = now.hour();
-    byte m = now.minute();
-    symbol_show[3] = h / 10;
-    symbol_show[2] = h - symbol_show[3] * 10;
-    symbol_show[1] = m / 10;
-    symbol_show[0] = m - symbol_show[1] * 10;
-
-    if(false){
-      // DEBUG
-      Serial.print(symbol_show[3]);
-      Serial.print(symbol_show[2]);
-      Serial.print(":");
-      Serial.print(symbol_show[1]);
-      Serial.println(symbol_show[0]);
-    }
-    
+  Serial.println("theaterChaseRainbow");
+  theaterChaseRainbow(35);
+  */
+}
 
 
-    calc_pixels(symbols, symbol_show, pix_show);  //Calculates every pixel based on "pixel_show"
-
-    pixels.clear(); //Clears all pixels (not sure if needed, if I overwrite every pixel with new informations)
-
-    //Set pixel OFF/ON based on "pix_show" and their color atm fixed to one color. Could implement array to set different color for each pixel.
-    for(int i = 0; i < sizeof(pix_show); i++){
-      pixels.setPixelColor(i, pixels.Color(0, 150, 0));
-    }
-
-    pixels.show();    //Show the pixel brightness and color set
-    
-    refreshtime = millis(); //reset refreshtime to wait again
-    //Serial.println("Done");
-
-    if(false){
-      //Testplace start
-      Serial.print("Temperature: ");
-      Serial.print(rtc.getTemperature());
-      Serial.println(" C°");
-      //Testplace end
-    }
+//Sets none signal_show segments to off
+void cutColors(){
+  DateTime  now = rtc.now();     //Read actual Real Time
+  //Changing displayed inforamtion (Time, Date, Temperature)
+  byte s = now.second();
+  //Changing which information is displayed by Real Time second
+  if(s <=15 || s >45) modus = 0;
+  else if(s > 15 && s <=30) modus = 1;
+  else if(s > 30 && s < 45) modus = 2;
+  if(h > 22 || h < 6){brightness = 24;} else {brightness = 255;}
+  Serial.println(h);
+  Serial.println(brightness);
+    refreshtime = millis();
+  //Updating informations for display
+  switch (modus) {
+    case 0:
+      h = now.hour();
+      m = now.minute();
+      symbol_show[3] = h / 10;
+      if(symbol_show[3] == 0) symbol_show[3] = 12;
+      symbol_show[2] = h - symbol_show[3] * 10;
+      symbol_show[1] = m / 10;
+      symbol_show[0] = m - symbol_show[1] * 10;
+      break;
+    case 1:
+      d = now.day();
+      mon = now.month();
+      symbol_show[3] = d / 10;
+      symbol_show[2] = d - symbol_show[3] * 10;
+      symbol_show[1] = mon / 10;
+      symbol_show[0] = mon - symbol_show[1] * 10;
+      break;
+    case 2:
+      temp = rtc.getTemperature();
+      symbol_show[3] = temp / 10;
+      symbol_show[2] = temp - symbol_show[3] * 10;
+      symbol_show[1] = 11;
+      symbol_show[0] = 10;
+      break;
+    default:
+      break;
+  }
+  calc_pixels(symbols, symbol_show, pix_show);  //Calculates every pixel based on "pixel_show"
+  //Set pixel OFF/ON based on "pix_show" and their color atm fixed to one color. Could implement array to set different color for each pixel.
+  for(int i = 0; i < sizeof(pix_show); i++){
+    if(!pix_show[i])pixels.setPixelColor(i, pixels.Color(0, 0, 0));
   }
 }
+
+
+
 /*
 functions to test:
 colorWipe(pixels.Color(  0, 255,   0), 50);    // Green
 theaterChase(strip.Color(  0,   0, 127), 50); // Blue
 rainbow(10);
 theaterChaseRainbow(50);
-
+*/
 // Theater-marquee-style chasing lights. Pass in a color (32-bit value,
 // a la strip.Color(r,g,b) as mentioned above), and a delay time (in ms)
 // between frames.
 void theaterChase(uint32_t color, int wait) {
   for(int a=0; a<10; a++) {  // Repeat 10 times...
     for(int b=0; b<3; b++) { //  'b' counts from 0 to 2...
-      strip.clear();         //   Set all pixels in RAM to 0 (off)
+      pixels.clear();         //   Set all pixels in RAM to 0 (off)
       // 'c' counts up from 'b' to end of strip in steps of 3...
-      for(int c=b; c<strip.numPixels(); c += 3) {
-        strip.setPixelColor(c, color); // Set pixel 'c' to value 'color'
+      for(int c=b; c<pixels.numPixels(); c += 3) {
+        pixels.setPixelColor(c, color); // Set pixel 'c' to value 'color'
       }
-      strip.show(); // Update strip with new contents
+      cutColors();
+      pixels.show(); // Update strip with new contents
       delay(wait);  // Pause for a moment
     }
   }
@@ -169,19 +195,20 @@ void rainbow(int wait) {
   // just count from 0 to 3*65536. Adding 256 to firstPixelHue each time
   // means we'll make 3*65536/256 = 768 passes through this outer loop:
   for(long firstPixelHue = 0; firstPixelHue < 3*65536; firstPixelHue += 256) {
-    for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+    for(int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
       // Offset pixel hue by an amount to make one full revolution of the
       // color wheel (range of 65536) along the length of the strip
       // (strip.numPixels() steps):
-      int pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
+      int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
       // strip.ColorHSV() can take 1 or 3 arguments: a hue (0 to 65535) or
       // optionally add saturation and value (brightness) (each 0 to 255).
       // Here we're using just the single-argument hue variant. The result
       // is passed through strip.gamma32() to provide 'truer' colors
       // before assigning to each pixel:
-      strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(pixelHue)));
+      pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 255, brightness)));
     }
-    strip.show(); // Update strip with new contents
+    cutColors();
+    pixels.show(); // Update strip with new contents
     delay(wait);  // Pause for a moment
   }
 }
@@ -191,19 +218,25 @@ void theaterChaseRainbow(int wait) {
   int firstPixelHue = 0;     // First pixel starts at red (hue 0)
   for(int a=0; a<30; a++) {  // Repeat 30 times...
     for(int b=0; b<3; b++) { //  'b' counts from 0 to 2...
-      strip.clear();         //   Set all pixels in RAM to 0 (off)
+      pixels.clear();         //   Set all pixels in RAM to 0 (off)
       // 'c' counts up from 'b' to end of strip in increments of 3...
-      for(int c=b; c<strip.numPixels(); c += 3) {
+      for(int c=b; c<pixels.numPixels(); c += 3) {
         // hue of pixel 'c' is offset by an amount to make one full
         // revolution of the color wheel (range 65536) along the length
         // of the strip (strip.numPixels() steps):
-        int      hue   = firstPixelHue + c * 65536L / strip.numPixels();
-        uint32_t color = strip.gamma32(strip.ColorHSV(hue)); // hue -> RGB
-        strip.setPixelColor(c, color); // Set pixel 'c' to value 'color'
+        int      hue   = firstPixelHue + c * 65536L / pixels.numPixels();
+        uint32_t color = pixels.gamma32(pixels.ColorHSV(hue)); // hue -> RGB
+        pixels.setPixelColor(c, color); // Set pixel 'c' to value 'color'
       }
-      strip.show();                // Update strip with new contents
+      cutColors();
+      pixels.show();                // Update strip with new contents
       delay(wait);                 // Pause for a moment
       firstPixelHue += 65536 / 90; // One cycle of color wheel over 90 frames
     }
   }
+}
+
+
+void movingStrip(int wait){
+  
 }

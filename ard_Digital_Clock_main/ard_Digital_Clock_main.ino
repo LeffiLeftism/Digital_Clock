@@ -122,8 +122,6 @@ void cutColors(){
   else if(s > 15 && s <=30) modus = 1;
   else if(s > 30 && s < 45) modus = 2;
   if(h > 22 || h < 6){brightness = 24;} else {brightness = 255;}
-  Serial.println(h);
-  Serial.println(brightness);
     refreshtime = millis();
   //Updating informations for display
   switch (modus) {
@@ -131,10 +129,12 @@ void cutColors(){
       h = now.hour();
       m = now.minute();
       symbol_show[3] = h / 10;
-      if(symbol_show[3] == 0) symbol_show[3] = 12;
       symbol_show[2] = h - symbol_show[3] * 10;
       symbol_show[1] = m / 10;
       symbol_show[0] = m - symbol_show[1] * 10;
+      if(symbol_show[3] == 0){
+        symbol_show[3] = 12;
+      }
       break;
     case 1:
       d = now.day();

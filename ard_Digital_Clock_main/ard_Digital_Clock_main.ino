@@ -92,7 +92,7 @@ void setup() {
 
 void loop() {
 
-  if(h > 22 || h < 6){
+  if(h > 22 || h < 7){
     for(int i = 0; i < NUMPIXELS; i++){
       pixels.setPixelColor(i, pixels.Color(1,0,0));
     }

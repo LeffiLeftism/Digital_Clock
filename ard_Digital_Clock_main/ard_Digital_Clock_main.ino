@@ -42,7 +42,7 @@ bool symbols [][SEGMENTS] = {{1,1,1,0,1,1,1}, //0
 
 //Variables
 byte modus = 0;
-byte h, m, d, mon, temp;
+byte s, m, h, d, mon, temp;
 byte brightness = 0;
 byte symbol_show [DIGITS];   //Contains numbers to show on clock
 bool pix_show[NUMPIXELS];   //Contains 0/1 (OFF/ON) for each LED/pixel on LED strip
@@ -53,12 +53,14 @@ unsigned long refreshtime;  //Variable to track passed time, to refresh display
 // strips you might need to change the third parameter -- see the
 // strandtest example for more information on possible values.
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel points(12, 7, NEO_GRB + NEO_KHZ800);
 //Setting up Real-Time-Clock to show the actual time
 RTC_DS3231 rtc;
 
 void setup() {
   Serial.begin(4800); //Initialize Serial Monitor
   pixels.begin(); // Initialize NeoPixel strip object (REQUIRED)
+  points.begin(); // Initialize NeoPixel strip object (REQUIRED)
   if (! rtc.begin()) { //Tests if RTC is connected
     Serial.println("Couldn't find RTC");
     Serial.flush();
@@ -95,9 +97,17 @@ void loop() {
   if(h > 22 || h < 7){
     for(int i = 0; i < NUMPIXELS; i++){
       pixels.setPixelColor(i, pixels.Color(1,0,0));
+      if(i<12){
+        if(s%2){
+          points.setPixelColor(i, points.Color(1,0,0));
+        } else {
+          points.setPixelColor(i, points.Color(10,0,0));
+        }
+      }
     }
     cutColors();
     pixels.show();
+    points.show();
   } else {  
     //Serial.println("Rainbow");
     rainbow(120);
@@ -116,7 +126,7 @@ void loop() {
 void cutColors(){
   DateTime  now = rtc.now();     //Read actual Real Time
   //Changing displayed inforamtion (Time, Date, Temperature)
-  byte s = now.second();
+  s = now.second();
   //Changing which information is displayed by Real Time second
   if(s <=15 || s >45) modus = 0;
   else if(s > 15 && s <=30) modus = 1;
@@ -206,9 +216,25 @@ void rainbow(int wait) {
       // is passed through strip.gamma32() to provide 'truer' colors
       // before assigning to each pixel:
       pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 255, brightness)));
+      if(i<12){
+        if(s%2 && modus == 0){
+          points.setPixelColor(i, points.Color(60,60,60));
+        } else if(modus == 0){
+          points.setPixelColor(i, points.Color(10,10,10));
+        } else if(modus == 1){
+          if(i>5){
+            points.setPixelColor(i, points.Color(10,10,10));
+          } else {
+            points.setPixelColor(i, points.Color(0,0,0));
+          }
+        } else if(modus == 2){
+          points.setPixelColor(i, points.Color(0,0,0));
+        }
+      }
     }
     cutColors();
     pixels.show(); // Update strip with new contents
+    points.show();
     delay(wait);  // Pause for a moment
   }
 }
@@ -234,9 +260,4 @@ void theaterChaseRainbow(int wait) {
       firstPixelHue += 65536 / 90; // One cycle of color wheel over 90 frames
     }
   }
-}
-
-
-void movingStrip(int wait){
-  
 }

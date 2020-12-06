@@ -1,10 +1,10 @@
 
 To-Do:
 + ADD function to change color for every pixel separatly
-  + change color over time
+  (done) + change color over time
   + change color assigned to temperature
-  + move "point" around active segments (time or temerature or so)
+  (canceled) + move "point" around active segments (time or temerature or so)
 + ADD startup-LED animation or something
-+ ADD display temperature
-+ ADD switch between time and temperature and date
+(done) + ADD display temperature
+(done) + ADD switch between time and temperature and date
 + ADD function to show pixels with 2 arrays given (pix_show & color_show(or something))

@@ -131,7 +131,7 @@ void cutColors(){
   if(s <=15 || s >45) modus = 0;
   else if(s > 15 && s <=30) modus = 1;
   else if(s > 30 && s < 45) modus = 2;
-  if(h > 22 || h < 6){brightness = 24;} else {brightness = 180;}
+  if(h > 22 || h < 6){brightness = 24;} else {brightness = 160;}
     refreshtime = millis();
   //Updating informations for display
   switch (modus) {
@@ -218,9 +218,9 @@ void rainbow(int wait) {
       pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 150, brightness)));
       if(i<12){
         if(s%2 && modus == 0){
-          points.setPixelColor(i, points.Color(60,60,60));
-        } else if(modus == 0){
           points.setPixelColor(i, points.Color(10,10,10));
+        } else if(modus == 0){
+          points.setPixelColor(i, points.Color(5,5,5));
         } else if(modus == 1){
           if(i>5){
             points.setPixelColor(i, points.Color(10,10,10));

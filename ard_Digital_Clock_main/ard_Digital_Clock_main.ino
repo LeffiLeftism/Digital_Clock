@@ -131,7 +131,7 @@ void cutColors(){
   if(s <=15 || s >45) modus = 0;
   else if(s > 15 && s <=30) modus = 1;
   else if(s > 30 && s < 45) modus = 2;
-  if(h > 22 || h < 6){brightness = 24;} else {brightness = 255;}
+  if(h > 22 || h < 6){brightness = 24;} else {brightness = 180;}
     refreshtime = millis();
   //Updating informations for display
   switch (modus) {
@@ -215,7 +215,7 @@ void rainbow(int wait) {
       // Here we're using just the single-argument hue variant. The result
       // is passed through strip.gamma32() to provide 'truer' colors
       // before assigning to each pixel:
-      pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 255, brightness)));
+      pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 150, brightness)));
       if(i<12){
         if(s%2 && modus == 0){
           points.setPixelColor(i, points.Color(60,60,60));

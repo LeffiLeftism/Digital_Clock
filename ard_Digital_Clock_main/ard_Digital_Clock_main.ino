@@ -41,9 +41,9 @@ bool symbols [][SEGMENTS] = {{1,1,1,0,1,1,1}, //0
                              {0,0,0,0,0,0,0}};//all off
 
 //Variables
-byte modus = 0;
-byte s, m, h, d, mon, temp;
-byte brightness = 0;
+
+byte s, m, h, d, mon, temp, mode = 0;
+byte brightness = 120;
 byte symbol_show [DIGITS];   //Contains numbers to show on clock
 bool pix_show[NUMPIXELS];   //Contains 0/1 (OFF/ON) for each LED/pixel on LED strip
 unsigned long refreshtime;  //Variable to track passed time, to refresh display
@@ -173,23 +173,18 @@ void cutColors(){
 
 
 
-/*
-functions to test:
-colorWipe(pixels.Color(  0, 255,   0), 50);    // Green
-theaterChase(strip.Color(  0,   0, 127), 50); // Blue
-rainbow(10);
-theaterChaseRainbow(50);
-*/
-// Theater-marquee-style chasing lights. Pass in a color (32-bit value,
-// a la strip.Color(r,g,b) as mentioned above), and a delay time (in ms)
-// between frames.
-void theaterChase(uint32_t color, int wait) {
-  for(int a=0; a<10; a++) {  // Repeat 10 times...
-    for(int b=0; b<3; b++) { //  'b' counts from 0 to 2...
-      pixels.clear();         //   Set all pixels in RAM to 0 (off)
-      // 'c' counts up from 'b' to end of strip in steps of 3...
-      for(int c=b; c<pixels.numPixels(); c += 3) {
-        pixels.setPixelColor(c, color); // Set pixel 'c' to value 'color'
+
+// Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
+void rainbow(byte mode, int wait) {
+  if((mode >> 1)%2 == 0){
+    static long firstPixelHue = 0; 
+    if(firstPixelHue < 3*65536){
+      for(int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
+        // (strip.numPixels() steps):
+        int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
+        // strip.ColorHSV() can take 1 or 3 arguments: a hue (0 to 65535) or
+        // optionally add saturation and value (brightness) (each 0 to 255).
+        pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 160, brightness)));
       }
       cutColors();
       pixels.show(); // Update strip with new contents
@@ -198,38 +193,15 @@ void theaterChase(uint32_t color, int wait) {
   }
 }
 
-// Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
-void rainbow(int wait) {
-  // Hue of first pixel runs 3 complete loops through the color wheel.
-  // Color wheel has a range of 65536 but it's OK if we roll over, so
-  // just count from 0 to 3*65536. Adding 256 to firstPixelHue each time
-  // means we'll make 3*65536/256 = 768 passes through this outer loop:
-  for(long firstPixelHue = 0; firstPixelHue < 3*65536; firstPixelHue += 256) {
-    for(int i=0; i<pixels.numPixels(); i++) { // For each pixel in strip...
-      // Offset pixel hue by an amount to make one full revolution of the
-      // color wheel (range of 65536) along the length of the strip
-      // (strip.numPixels() steps):
-      int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
-      // strip.ColorHSV() can take 1 or 3 arguments: a hue (0 to 65535) or
-      // optionally add saturation and value (brightness) (each 0 to 255).
-      // Here we're using just the single-argument hue variant. The result
-      // is passed through strip.gamma32() to provide 'truer' colors
-      // before assigning to each pixel:
-      pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 150, brightness)));
-      if(i<12){
-        if(s%2 && modus == 0){
-          points.setPixelColor(i, points.Color(10,10,10));
-        } else if(modus == 0){
-          points.setPixelColor(i, points.Color(5,5,5));
-        } else if(modus == 1){
-          if(i>5){
-            points.setPixelColor(i, points.Color(10,10,10));
-          } else {
-            points.setPixelColor(i, points.Color(0,0,0));
-          }
-        } else if(modus == 2){
-          points.setPixelColor(i, points.Color(0,0,0));
-        }
+void point(byte mode){
+  for(int i=0; i<12; i++){
+    if(!bitRead(mode, 1)){ //Day
+      if(!bitRead(mode, 0)){
+        if(s%2)points.setPixelColor(i, points.Color(10,10,10)); //Blink ON
+          else points.setPixelColor(i, points.Color(5,5,5));   //Blink OFF
+      } else {
+        if(i>5)points.setPixelColor(i, points.Color(5,5,5));
+          else points.setPixelColor(i, points.Color(0,0,0));
       }
     }
     cutColors();

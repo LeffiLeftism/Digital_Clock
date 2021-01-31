@@ -42,7 +42,7 @@ bool symbols [][SEGMENTS] = {{1,1,1,0,1,1,1}, //0
 
 //Variables
 byte s, m, h, d, mon, temp, mode = 0;
-byte brightness = 255;
+byte brightness = 120;
 byte symbol_show [DIGITS];   //Contains numbers to show on clock
 bool pix_show[NUMPIXELS];   //Contains 0/1 (OFF/ON) for each LED/pixel on LED strip
 unsigned long refreshtime;  //Variable to track passed time, to refresh display
@@ -132,7 +132,7 @@ void rainbow(byte mode, int wait) {
         int pixelHue = firstPixelHue + (i * 65536L / pixels.numPixels());
         // strip.ColorHSV() can take 1 or 3 arguments: a hue (0 to 65535) or
         // optionally add saturation and value (brightness) (each 0 to 255).
-        pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 255, brightness)));
+        pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 160, brightness)));
       }
       firstPixelHue += 256;
     } else firstPixelHue = 0;
@@ -147,10 +147,10 @@ void point(byte mode){
   for(int i=0; i<12; i++){
     if(!bitRead(mode, 1)){ //Day
       if(!bitRead(mode, 0)){
-        if(s%2)points.setPixelColor(i, points.Color(40,40,40)); //Blink ON
-          else points.setPixelColor(i, points.Color(10,10,10));   //Blink OFF
+        if(s%2)points.setPixelColor(i, points.Color(10,10,10)); //Blink ON
+          else points.setPixelColor(i, points.Color(5,5,5));   //Blink OFF
       } else {
-        if(i>5)points.setPixelColor(i, points.Color(10,10,10));
+        if(i>5)points.setPixelColor(i, points.Color(5,5,5));
           else points.setPixelColor(i, points.Color(0,0,0));
       }
     } else if(bitRead(mode, 1)){ //Night

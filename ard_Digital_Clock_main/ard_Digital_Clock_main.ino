@@ -41,17 +41,12 @@ bool symbols [][SEGMENTS] = {{1,1,1,0,1,1,1}, //0
                              {0,0,0,0,0,0,0}};//all off
 
 //Variables
-
 byte s, m, h, d, mon, temp, mode = 0;
 byte brightness = 120;
 byte symbol_show [DIGITS];   //Contains numbers to show on clock
 bool pix_show[NUMPIXELS];   //Contains 0/1 (OFF/ON) for each LED/pixel on LED strip
 unsigned long refreshtime;  //Variable to track passed time, to refresh display
 
-// When setting up the NeoPixel library, we tell it how many pixels,
-// and which pin to use to send signals. Note that for older NeoPixel
-// strips you might need to change the third parameter -- see the
-// strandtest example for more information on possible values.
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel points(12, 7, NEO_GRB + NEO_KHZ800);
 //Setting up Real-Time-Clock to show the actual time
@@ -63,104 +58,58 @@ void setup() {
   points.begin(); // Initialize NeoPixel strip object (REQUIRED)
   if (! rtc.begin()) { //Tests if RTC is connected
     Serial.println("Couldn't find RTC");
-    Serial.flush();
     abort();
   }
 
   if (rtc.lostPower()) { //Tests if RTC lost power since last update. If lost new time is set to compile time.
     Serial.println("RTC lost power, let's set the time!");
-    // When time needs to be set on a new device, or after a power loss, the
-    // following line sets the RTC to the date & time this sketch was compiled
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
-    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
-
+    abort();
   }
 
   //Dev-place start
   delay(100);
   
+  refreshtime = millis(); 
+  //Set actual time to track passed time for refresh display
+}
 
-  //Def-place end
-
-  //Add function for startup Visualisation
-  
-  refreshtime = millis(); //Sets actual time to track passed time for refresh display
-
-  DateTime  now = rtc.now();     //Read actual Real Time
+void loop() {     
+  //Read actual Real Time
+  DateTime  now = rtc.now();
+  mon = now.month();
+  d = now.day();
   h = now.hour();
   m = now.minute();
-}
-
-void loop() {
-
-  if(h > 22 || h < 7){
-    for(int i = 0; i < NUMPIXELS; i++){
-      pixels.setPixelColor(i, pixels.Color(1,0,0));
-      if(i<12){
-        if(s%2){
-          points.setPixelColor(i, points.Color(1,0,0));
-        } else {
-          points.setPixelColor(i, points.Color(10,0,0));
-        }
-      }
-    }
-    cutColors();
-    pixels.show();
-    points.show();
-  } else {  
-    //Serial.println("Rainbow");
-    rainbow(120);
-  }  
-  /*
-  Serial.println("theaterChase");
-  theaterChase(pixels.Color(  0,   0, 127), 49);
-  
-  Serial.println("theaterChaseRainbow");
-  theaterChaseRainbow(35);
-  */
-}
-
-
-//Sets none signal_show segments to off
-void cutColors(){
-  DateTime  now = rtc.now();     //Read actual Real Time
-  //Changing displayed inforamtion (Time, Date, Temperature)
   s = now.second();
-  //Changing which information is displayed by Real Time second
-  if(s <=15 || s >45) modus = 0;
-  else if(s > 15 && s <=30) modus = 1;
-  else if(s > 30 && s < 45) modus = 2;
-  if(h > 22 || h < 6){brightness = 24;} else {brightness = 160;}
-    refreshtime = millis();
-  //Updating informations for display
-  switch (modus) {
+
+  if(h < 8 || h > 22)mode = B10; //Change Day and Night mode
+  else mode = B00;
+  if(s > 25 && s < 35) mode += B1; //Change Time and Date mode
+
+  rainbow(mode,120);
+  point(mode);
+  cutColors(mode);
+  pixels.show();
+  points.show();
+}
+
+
+
+void cutColors(byte mode){           //Sets none signal_show segments to off
+  switch (mode%2) {
     case 0:
-      h = now.hour();
-      m = now.minute();
       symbol_show[3] = h / 10;
       symbol_show[2] = h - symbol_show[3] * 10;
       symbol_show[1] = m / 10;
       symbol_show[0] = m - symbol_show[1] * 10;
-      if(symbol_show[3] == 0){
-        symbol_show[3] = 12;
-      }
+      if(symbol_show[3] == 0)symbol_show[3] = 12;
       break;
     case 1:
-      d = now.day();
-      mon = now.month();
       symbol_show[3] = d / 10;
       symbol_show[2] = d - symbol_show[3] * 10;
       symbol_show[1] = mon / 10;
       symbol_show[0] = mon - symbol_show[1] * 10;
-      break;
-    case 2:
-      temp = rtc.getTemperature();
-      symbol_show[3] = temp / 10;
-      symbol_show[2] = temp - symbol_show[3] * 10;
-      symbol_show[1] = 11;
-      symbol_show[0] = 10;
       break;
     default:
       break;
@@ -171,7 +120,6 @@ void cutColors(){
     if(!pix_show[i])pixels.setPixelColor(i, pixels.Color(0, 0, 0));
   }
 }
-
 
 
 
@@ -187,13 +135,15 @@ void rainbow(byte mode, int wait) {
         // optionally add saturation and value (brightness) (each 0 to 255).
         pixels.setPixelColor(i, pixels.gamma32(pixels.ColorHSV(pixelHue, 160, brightness)));
       }
-      cutColors();
-      pixels.show(); // Update strip with new contents
-      delay(wait);  // Pause for a moment
+      firstPixelHue += 256;
+    } else firstPixelHue = 0;
+  } else if ((mode >> 1)%2 == 1){
+    for (int i=0; i< pixels.numPixels(); i++){
+      pixels.setPixelColor(i, pixels.Color(2,0,0));
     }
   }
+  delay(wait);
 }
-
 void point(byte mode){
   for(int i=0; i<12; i++){
     if(!bitRead(mode, 1)){ //Day
@@ -204,33 +154,13 @@ void point(byte mode){
         if(i>5)points.setPixelColor(i, points.Color(5,5,5));
           else points.setPixelColor(i, points.Color(0,0,0));
       }
-    }
-    cutColors();
-    pixels.show(); // Update strip with new contents
-    points.show();
-    delay(wait);  // Pause for a moment
-  }
-}
-
-// Rainbow-enhanced theater marquee. Pass delay time (in ms) between frames.
-void theaterChaseRainbow(int wait) {
-  int firstPixelHue = 0;     // First pixel starts at red (hue 0)
-  for(int a=0; a<30; a++) {  // Repeat 30 times...
-    for(int b=0; b<3; b++) { //  'b' counts from 0 to 2...
-      pixels.clear();         //   Set all pixels in RAM to 0 (off)
-      // 'c' counts up from 'b' to end of strip in increments of 3...
-      for(int c=b; c<pixels.numPixels(); c += 3) {
-        // hue of pixel 'c' is offset by an amount to make one full
-        // revolution of the color wheel (range 65536) along the length
-        // of the strip (strip.numPixels() steps):
-        int      hue   = firstPixelHue + c * 65536L / pixels.numPixels();
-        uint32_t color = pixels.gamma32(pixels.ColorHSV(hue)); // hue -> RGB
-        pixels.setPixelColor(c, color); // Set pixel 'c' to value 'color'
+    } else if(bitRead(mode, 1)){ //Night
+      if(!bitRead(mode, 0)){
+          points.setPixelColor(i, points.Color(2,0,0));   //Blink OFF
+      } else {
+        if(i>5)points.setPixelColor(i, points.Color(2,0,0));
+          else points.setPixelColor(i, points.Color(0,0,0));
       }
-      cutColors();
-      pixels.show();                // Update strip with new contents
-      delay(wait);                 // Pause for a moment
-      firstPixelHue += 65536 / 90; // One cycle of color wheel over 90 frames
     }
   }
 }

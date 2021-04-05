@@ -63,7 +63,6 @@ void setup() {
 
   if (rtc.lostPower()) { //Tests if RTC lost power since last update. If lost new time is set to compile time.
     Serial.println("RTC lost power, let's set the time!");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
     abort();
   }
 
